@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     'bookings',
     'payments',
     'ratings',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',   # Your existing users app
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -53,7 +56,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # Must be at the top
+    'django.middleware.common.CommonMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
 
 ROOT_URLCONF = 'cargolink_backend.urls'
 
@@ -116,13 +127,15 @@ USE_I18N = True
 
 USE_TZ = True
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
+
 
 
 
