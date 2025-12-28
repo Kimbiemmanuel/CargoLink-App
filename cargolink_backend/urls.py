@@ -24,17 +24,13 @@ from rest_framework.routers import DefaultRouter
 from bookings.views import CargoViewSet
 from users.views import RegisterView
 
+router = DefaultRouter()
+router.register(r'Booking', CargoViewSet, basename='Booking')
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('admin/', admin.site.urls),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/login/', obtain_auth_token, name='api_token_auth'),
-]
-
-router = DefaultRouter()
-router.register(r'Booking', CargoViewSet)
-
-urlpatterns = [
     path('api/', include(router.urls)),
 ]
