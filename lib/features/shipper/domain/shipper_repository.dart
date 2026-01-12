@@ -24,10 +24,7 @@ abstract class ShipperRepository {
     required double fareAmount,
   });
 
-  Future<List<Booking>> getMyBookings({
-    String? status,
-    int page = 1,
-  });
+  Future<List<Booking>> getMyBookings({String? status, int page = 1});
 
   Future<Booking> getBookingDetails(String bookingId);
 

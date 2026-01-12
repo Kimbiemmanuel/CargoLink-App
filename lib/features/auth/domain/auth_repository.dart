@@ -9,10 +9,7 @@ abstract class AuthRepository {
     required String phone,
   });
 
-  Future<auth.User?> signIn({
-    required String email,
-    required String password,
-  });
+  Future<auth.User?> signIn({required String email, required String password});
 
   Future<void> signOut();
 
