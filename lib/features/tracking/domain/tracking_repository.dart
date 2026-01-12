@@ -4,7 +4,9 @@ abstract class TrackingRepository {
 
   Future<List<Map<String, dynamic>>> getLocationHistory(String bookingId);
 
-  Future<Stream<Map<String, dynamic>>> subscribeToLiveTracking(String bookingId);
+  Future<Stream<Map<String, dynamic>>> subscribeToLiveTracking(
+    String bookingId,
+  );
 
   Future<void> updateLocation({
     required String bookingId,

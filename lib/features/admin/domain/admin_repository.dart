@@ -11,10 +11,7 @@ abstract class AdminRepository {
 
   Future<void> verifyCarrier(String carrierId);
 
-  Future<void> suspendUser({
-    required String userId,
-    required String reason,
-  });
+  Future<void> suspendUser({required String userId, required String reason});
 
   Future<void> unsuspendUser(String userId);
 
@@ -39,7 +36,5 @@ abstract class AdminRepository {
 
   Future<Map<String, dynamic>> getSystemSettings();
 
-  Future<void> updateSystemSettings({
-    required Map<String, dynamic> settings,
-  });
+  Future<void> updateSystemSettings({required Map<String, dynamic> settings});
 }
