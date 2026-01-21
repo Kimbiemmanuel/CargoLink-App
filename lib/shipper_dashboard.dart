@@ -1,7 +1,27 @@
+import 'package:cargolink_application/models/dashboard_stats.dart';
+import 'package:cargolink_application/services/api_service.dart';
 import 'package:flutter/material.dart';
 
-class ShipperDashboard extends StatelessWidget {
-  const ShipperDashboard({super.key});
+class ShipperDashboard extends StatefulWidget {
+  final String username;
+  final String token; // The auth token is now required
+
+  const ShipperDashboard({super.key, required this.username, required this.token});
+
+  @override
+  State<ShipperDashboard> createState() => _ShipperDashboardState();
+}
+
+class _ShipperDashboardState extends State<ShipperDashboard> {
+  late Future<DashboardStats> _dashboardStats;
+  final ApiService _apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the stats when the widget is first created
+    _dashboardStats = _apiService.getDashboardStats(widget.token);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +58,9 @@ class ShipperDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Hello, John!",
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+            Text(
+              "Hello, ${widget.username}!",
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(height: 5),
             const Text(
@@ -49,13 +69,27 @@ class ShipperDashboard extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // Status Summary Cards
-            Row(
-              children: [
-                _buildStatusCard("Active", "12", Colors.blueAccent, Icons.local_shipping),
-                const SizedBox(width: 15),
-                _buildStatusCard("Pending", "05", Colors.orangeAccent, Icons.access_time),
-              ],
+            // FutureBuilder to display dashboard stats
+            FutureBuilder<DashboardStats>(
+              future: _dashboardStats,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)));
+                } else if (snapshot.hasData) {
+                  final stats = snapshot.data!;
+                  return Row(
+                    children: [
+                      _buildStatusCard("Active", stats.activeLoads.toString(), Colors.blueAccent, Icons.local_shipping),
+                      const SizedBox(width: 15),
+                      _buildStatusCard("Completed", stats.completed.toString(), Colors.greenAccent, Icons.check_circle_outline),
+                    ],
+                  );
+                } else {
+                  return const Center(child: Text('No data available'));
+                }
+              },
             ),
             const SizedBox(height: 30),
 
@@ -75,7 +109,7 @@ class ShipperDashboard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
 
-            // Shipment List
+            // Shipment List (This can also be updated with real data later)
             _buildShipmentItem(context, "Electronics Batch A", "New York", "Chicago", "In Transit"),
             _buildShipmentItem(context, "Industrial Pipes", "Houston", "Dallas", "Pending"),
             _buildShipmentItem(context, "Office Furniture", "Atlanta", "Miami", "Delivered"),
@@ -83,10 +117,9 @@ class ShipperDashboard extends StatelessWidget {
         ),
       ),
 
-      // Floating Action Button to create a shipment
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.pushNamed(context, '/post_load'); // Now links to the form
+          Navigator.pushNamed(context, '/post_load');
         },
         backgroundColor: Colors.blueAccent,
         icon: const Icon(Icons.add),

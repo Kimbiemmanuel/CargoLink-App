@@ -61,7 +61,7 @@ class CargoLinkApp extends StatelessWidget {
         '/landing': (context) => const CargoLinkLandingPage(),
         '/shipper_login': (context) => const ShipperLoginScreen(),
         '/shipper_register': (context) => const ShipperRegistrationScreen(),
-        '/shipper_dashboard': (context) => const ShipperDashboard(),
+        '/shipper_dashboard': (context) => const ShipperDashboard(username: '', token: '',),
         '/post_load': (context) => const PostLoadScreen(),
         '/tracking': (context) => const TrackingMapScreen(),
         '/shipper_profile': (context) => const ShipperProfileScreen(),

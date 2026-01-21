@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cargolink_application/services/api_service.dart';
+import 'package:cargolink_application/shipper_dashboard.dart';
 
 class ShipperLoginScreen extends StatefulWidget {
   const ShipperLoginScreen({super.key});
@@ -10,6 +12,50 @@ class ShipperLoginScreen extends StatefulWidget {
 class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  final ApiService _apiService = ApiService();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await _apiService.loginUser(
+      username: _usernameController.text,
+      password: _passwordController.text,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result.containsKey('error') && result['error'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login Failed: ${result['message']}')),
+      );
+    } else {
+      final username = result['username'] ?? 'User';
+      final token = result['token'] ?? '';
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ShipperDashboard(username: username, token: token),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,17 +98,18 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
                   ),
                   const SizedBox(height: 50),
 
-                  // Email Input
-                  _buildInputLabel("Email Address"),
+                  _buildInputLabel("Username"), // Changed from Email
                   TextFormField(
+                    controller: _usernameController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration(Icons.email_outlined, "Enter your email"),
+                    decoration: _inputDecoration(Icons.person_outline, "Enter your username"),
+                    validator: (value) => value!.isEmpty ? 'Please enter your username' : null,
                   ),
                   const SizedBox(height: 25),
 
-                  // Password Input
                   _buildInputLabel("Password"),
                   TextFormField(
+                    controller: _passwordController,
                     obscureText: _obscurePassword,
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration(
@@ -76,9 +123,9 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
+                    validator: (value) => value!.isEmpty ? 'Please enter your password' : null,
                   ),
 
-                  // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -92,25 +139,22 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
 
                   const SizedBox(height: 30),
 
-                  // Login Button
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Auth Logic
-                        Navigator.pushReplacementNamed(context, '/shipper_dashboard');
-                      },
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                      onPressed: _isLoading ? null : _handleLogin,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "Login",
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
                     ),
                   ),
 
                   const SizedBox(height: 25),
 
-                  // Registration Link
                   Center(
                     child: GestureDetector(
                       onTap: () => Navigator.pushNamed(context, '/shipper_register'),
