@@ -25,11 +25,11 @@ class CargoLinkLandingPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 100),
                   // App Branding
                   Row(
                     children: [
-                      Image.asset('assets/logos/truck_logo.png', height: 40),
+                      Image.asset('assets/logos/truck_logo.png', height: 100),
                       const SizedBox(width: 12),
                       const Text(
                         'CargoLink',
@@ -82,7 +82,7 @@ class CargoLinkLandingPage extends StatelessWidget {
                     height: 60,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/shipper_register');
+                        Navigator.pushNamed(context, '/shipper_login'); // Changed from shipper_register
                       },
                       child: const Text(
                         'Get Started as Shipper',
@@ -96,7 +96,7 @@ class CargoLinkLandingPage extends StatelessWidget {
                   Center(
                     child: TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/carrier_registration');
+                        Navigator.pushNamed(context, '/carrier_login'); // Navigate to carrier login
                       },
                       child: const Text(
                         'Are you a Carrier? Join here',

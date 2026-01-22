@@ -1,3 +1,4 @@
+import 'package:cargolink_application/carrier_login_screen.dart';
 import 'package:cargolink_application/trip_history_screen.dart';
 import 'package:flutter/material.dart';
 import 'splash_screen.dart';
@@ -56,33 +57,65 @@ class CargoLinkApp extends StatelessWidget {
 
       // Route management
       initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/landing': (context) => const CargoLinkLandingPage(),
-        '/shipper_login': (context) => const ShipperLoginScreen(),
-        '/shipper_register': (context) => const ShipperRegistrationScreen(),
-        '/shipper_dashboard': (context) => const ShipperDashboard(username: '', token: '',),
-        '/post_load': (context) => const PostLoadScreen(),
-        '/tracking': (context) => const TrackingMapScreen(),
-        '/shipper_profile': (context) => const ShipperProfileScreen(),
-        '/carrier_profile': (context) => const CarrierProfileScreen(),
-        '/bidding_list': (context) => const CarrierBiddingScreen(),
-        '/payment': (context) => const PaymentScreen(),
-        '/notifications': (context) => const NotificationsScreen(),
-        '/notification_settings': (context) => const NotificationSettingsScreen(),
-        '/company_info': (context) => const CompanyInfoScreen(),
-        '/privacy_security': (context) => const PrivacySecurityScreen(),
-        '/support': (context) => const SupportScreen(),
-        '/edit_profile': (context) => const EditProfileScreen(),
-        '/carrier_registration': (context) => const CarrierRegistrationScreen(),
-        '/carrier_dashboard': (context) => const CarrierDashboardScreen(),
-        '/load_board': (context) => const LoadBoardScreen(),
-        '/load_details': (context) => const LoadDetailsScreen(),
-        '/carrier_wallet': (context) => const CarrierWalletScreen(),
-        '/active_trip': (context) => const ActiveTripScreen(),
-        '/fleet': (context) => const FleetManagementScreen(),
-        '/settings': (context) => const AppSettingsScreen(),
-        '/history': (context) => const TripHistoryScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(builder: (_) => const SplashScreen());
+          case '/landing':
+            return MaterialPageRoute(builder: (_) => const CargoLinkLandingPage());
+          case '/shipper_login':
+            return MaterialPageRoute(builder: (_) => const ShipperLoginScreen());
+          case '/shipper_register':
+            return MaterialPageRoute(builder: (_) => const ShipperRegistrationScreen());
+          case '/carrier_login':
+            return MaterialPageRoute(builder: (_) => const CarrierLoginScreen());
+          case '/carrier_registration':
+            return MaterialPageRoute(builder: (_) => const CarrierRegistrationScreen());
+          case '/carrier_dashboard':
+            final String authToken = settings.arguments as String;
+            return MaterialPageRoute(builder: (_) => CarrierDashboardScreen(authToken: authToken));
+          case '/post_load':
+            return MaterialPageRoute(builder: (_) => const PostLoadScreen());
+          case '/tracking':
+            return MaterialPageRoute(builder: (_) => const TrackingMapScreen());
+          case '/shipper_profile':
+            return MaterialPageRoute(builder: (_) => const ShipperProfileScreen());
+          case '/carrier_profile':
+            return MaterialPageRoute(builder: (_) => const CarrierProfileScreen());
+          case '/bidding_list':
+            return MaterialPageRoute(builder: (_) => const CarrierBiddingScreen());
+          case '/payment':
+            return MaterialPageRoute(builder: (_) => const PaymentScreen());
+          case '/notifications':
+            return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+          case '/notification_settings':
+            return MaterialPageRoute(builder: (_) => const NotificationSettingsScreen());
+          case '/company_info':
+            return MaterialPageRoute(builder: (_) => const CompanyInfoScreen());
+          case '/privacy_security':
+            return MaterialPageRoute(builder: (_) => const PrivacySecurityScreen());
+          case '/support':
+            return MaterialPageRoute(builder: (_) => const SupportScreen());
+          case '/edit_profile':
+            return MaterialPageRoute(builder: (_) => const EditProfileScreen());
+          case '/load_board':
+            return MaterialPageRoute(builder: (_) => const LoadBoardScreen());
+          case '/load_details':
+            return MaterialPageRoute(builder: (_) => const LoadDetailsScreen());
+          case '/carrier_wallet':
+            return MaterialPageRoute(builder: (_) => const CarrierWalletScreen());
+          case '/active_trip':
+            return MaterialPageRoute(builder: (_) => const ActiveTripScreen());
+          case '/fleet':
+            return MaterialPageRoute(builder: (_) => const FleetManagementScreen());
+          case '/settings':
+            return MaterialPageRoute(builder: (_) => const AppSettingsScreen());
+          case '/history':
+            return MaterialPageRoute(builder: (_) => const TripHistoryScreen());
+          default:
+            // Handle unknown routes, maybe show a 404 page
+            return MaterialPageRoute(builder: (_) => const Scaffold(body: Center(child: Text('Page not found'))));
+        }
       },
     );
   }

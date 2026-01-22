@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:cargolink_application/carrier_dashboard_screen.dart';
 import 'package:cargolink_application/services/api_service.dart';
-import 'package:cargolink_application/shipper_dashboard.dart';
+import 'package:flutter/material.dart';
 
-class ShipperLoginScreen extends StatefulWidget {
-  const ShipperLoginScreen({super.key});
+class CarrierLoginScreen extends StatefulWidget {
+  const CarrierLoginScreen({super.key});
 
   @override
-  State<ShipperLoginScreen> createState() => _ShipperLoginScreenState();
+  State<CarrierLoginScreen> createState() => _CarrierLoginScreenState();
 }
 
-class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
+class _CarrierLoginScreenState extends State<CarrierLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -27,7 +27,6 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
 
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isLoading = true;
     });
@@ -46,14 +45,11 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
         SnackBar(content: Text('Login Failed: ${result['message']}')),
       );
     } else {
-      final username = result['username'] ?? 'User';
-      // Correctly extract the token, checking for 'access' for JWT
-      final token = result['access'] ?? result['token'] ?? ''; 
-      
+      final authToken = result['token'] ?? result['access'] ?? '';
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ShipperDashboard(username: username, token: token),
+          builder: (context) => CarrierDashboardScreen(authToken: authToken),
         ),
       );
     }
@@ -86,7 +82,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   const Text(
-                    "Welcome Back",
+                    "Carrier Login",
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -95,7 +91,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    "Login to manage your shipments.",
+                    "Welcome back. Find your next load.",
                     style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 50),
@@ -159,14 +155,14 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
 
                   Center(
                     child: GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/shipper_register'),
+                      onTap: () => Navigator.pushNamed(context, '/carrier_registration'),
                       child: RichText(
                         text: const TextSpan(
-                          text: "Don't have an account? ",
+                          text: "New Carrier? ",
                           style: TextStyle(color: Colors.white70),
                           children: [
                             TextSpan(
-                              text: "Sign Up",
+                              text: "Register Here",
                               style: TextStyle(
                                 color: Colors.blueAccent,
                                 fontWeight: FontWeight.bold,

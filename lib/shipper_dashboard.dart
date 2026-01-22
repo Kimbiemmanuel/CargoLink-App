@@ -1,10 +1,10 @@
-import 'package:cargolink_application/models/dashboard_stats.dart';
-import 'package:cargolink_application/services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ShipperDashboard extends StatefulWidget {
   final String username;
-  final String token; // The auth token is now required
+  final String token;
 
   const ShipperDashboard({super.key, required this.username, required this.token});
 
@@ -13,14 +13,32 @@ class ShipperDashboard extends StatefulWidget {
 }
 
 class _ShipperDashboardState extends State<ShipperDashboard> {
-  late Future<DashboardStats> _dashboardStats;
-  final ApiService _apiService = ApiService();
+  late Future<Map<String, dynamic>> _dashboardData;
+  final String baseUrl = "http://10.0.2.2:8000/api"; // Ensure this is correct
 
   @override
   void initState() {
     super.initState();
-    // Fetch the stats when the widget is first created
-    _dashboardStats = _apiService.getDashboardStats(widget.token);
+    _dashboardData = fetchDashboardData();
+  }
+
+  Future<Map<String, dynamic>> fetchDashboardData() async {
+    print("DEBUG (Shipper): Sending Token -> ${widget.token}");
+    final response = await http.get(
+      Uri.parse('$baseUrl/bookings/summary/'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token ${widget.token}', 
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw Exception("Authentication failed. Please log in again.");
+    } else {
+      throw Exception("Failed to load dashboard stats: ${response.statusCode}");
+    }
   }
 
   @override
@@ -30,20 +48,16 @@ class _ShipperDashboardState extends State<ShipperDashboard> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("CargoLink Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Shipper Dashboard", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () {
-              Navigator.pushNamed(context, '/notifications');
-            },
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/shipper_profile');
-              },
+              onTap: () => Navigator.pushNamed(context, '/shipper_profile'),
               child: const CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.blueAccent,
@@ -64,36 +78,52 @@ class _ShipperDashboardState extends State<ShipperDashboard> {
             ),
             const SizedBox(height: 5),
             const Text(
-              "Track your goods",
+              "Manage your shipments",
               style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 25),
 
-            // FutureBuilder to display dashboard stats
-            FutureBuilder<DashboardStats>(
-              future: _dashboardStats,
+            FutureBuilder<Map<String, dynamic>>(
+              future: _dashboardData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)));
+                  return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
                 } else if (snapshot.hasData) {
-                  final stats = snapshot.data!;
-                  return Row(
+                  final data = snapshot.data!;
+                  // Safely access data using the same keys as the backend model
+                  final totalPosted = data['total_posted'] ?? 0;
+                  final activeLoads = data['active_loads'] ?? 0;
+                  final completed = data['completed_deliveries'] ?? 0;
+                  final totalSpent = (data['total_spent'] ?? 0.0).toDouble();
+
+                  return Column(
                     children: [
-                      _buildStatusCard("Active", stats.activeLoads.toString(), Colors.blueAccent, Icons.local_shipping),
-                      const SizedBox(width: 15),
-                      _buildStatusCard("Completed", stats.completed.toString(), Colors.greenAccent, Icons.check_circle_outline),
+                      Row(
+                        children: [
+                          _buildStatusCard("Total Posted", totalPosted.toString(), Colors.purpleAccent, Icons.inventory_2_outlined),
+                          const SizedBox(width: 15),
+                          _buildStatusCard("Active", activeLoads.toString(), Colors.blueAccent, Icons.local_shipping),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      Row(
+                        children: [
+                          _buildStatusCard("Completed", completed.toString(), Colors.green, Icons.check_circle_outline),
+                          const SizedBox(width: 15),
+                          _buildStatusCard("Total Spent", "\$${totalSpent.toStringAsFixed(2)}", Colors.amber, Icons.monetization_on_outlined),
+                        ],
+                      ),
                     ],
                   );
                 } else {
-                  return const Center(child: Text('No data available'));
+                  return const Center(child: Text("No stats available."));
                 }
               },
             ),
-            const SizedBox(height: 30),
 
-            // Recent Shipments Header
+            const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -108,19 +138,13 @@ class _ShipperDashboardState extends State<ShipperDashboard> {
               ],
             ),
             const SizedBox(height: 10),
-
-            // Shipment List (This can also be updated with real data later)
             _buildShipmentItem(context, "Electronics Batch A", "New York", "Chicago", "In Transit"),
             _buildShipmentItem(context, "Industrial Pipes", "Houston", "Dallas", "Pending"),
-            _buildShipmentItem(context, "Office Furniture", "Atlanta", "Miami", "Delivered"),
           ],
         ),
       ),
-
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, '/post_load');
-        },
+        onPressed: () => Navigator.pushNamed(context, '/post_load'),
         backgroundColor: Colors.blueAccent,
         icon: const Icon(Icons.add),
         label: const Text("New Shipment"),
@@ -151,57 +175,50 @@ class _ShipperDashboardState extends State<ShipperDashboard> {
   }
 
   Widget _buildShipmentItem(BuildContext context, String title, String from, String to, String status) {
-    return GestureDetector(
-      onTap: () {
-        if (status == "In Transit") {
-          Navigator.pushNamed(context, '/tracking');
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 15),
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.inventory_2_outlined, color: Colors.blueAccent),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blueAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 5),
-                  Text("$from → $to", style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                ],
-              ),
+            child: const Icon(Icons.inventory_2_outlined, color: Colors.blueAccent),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
+                Text("$from → $to", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: status == "In Transit" ? Colors.blueAccent.withOpacity(0.2) : Colors.white10,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  color: status == "In Transit" ? Colors.blueAccent : Colors.white70,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: status == "In Transit" ? Colors.blueAccent.withOpacity(0.2) : Colors.white10,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                color: status == "In Transit" ? Colors.blueAccent : Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

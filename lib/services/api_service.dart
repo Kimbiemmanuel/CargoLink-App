@@ -45,7 +45,7 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> loginUser({
-    required String username,
+    required String username, // Changed back to username
     required String password,
   }) async {
     try {
@@ -53,7 +53,7 @@ class ApiService {
         Uri.parse('$baseUrl/login/'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "username": username,
+          "username": username, // Changed back to username
           "password": password,
         }),
       );
@@ -70,17 +70,33 @@ class ApiService {
     }
   }
 
-  Future<DashboardStats> getDashboardStats(String token) async {
+  Future<DashboardStats> getDashboardStats(String token, dynamic widget) async {
     final response = await http.get(
       Uri.parse('$baseUrl/dashboard/'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Authorization': 'Token ${widget.authToken}',
       },
     );
 
     if (response.statusCode == 200) {
       return DashboardStats.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load dashboard stats');
+    }
+  }
+
+  Future<DashboardStats> getDashboardSummary(String yourSavedToken) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/bookings/summary/'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $yourSavedToken', // Use 'Bearer' if using JWT
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return DashboardStats.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load dashboard stats');
     }
