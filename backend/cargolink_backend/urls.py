@@ -1,48 +1,54 @@
-"""
-URL configuration for cargolink_backend project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
-
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_simplejwt.views import (
-    TokenRefreshView,
-)
-from users.views import RegisterView, LoginView
+from django.conf import settings
+from django.conf.urls.static import static
+from django.http import JsonResponse
+from django.db import connection
+from django.core.cache import cache
+from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework.routers import DefaultRouter
-from bookings.views import BookingViewSet, ShipmentViewSet, BookingSummaryView, BidViewSet  # Cleaned up double import
+from users.views import RegisterView, LoginView, CarrierDocumentUploadView
+from bookings.views import BookingViewSet, ShipmentViewSet, BookingSummaryView, BidViewSet
 
-# 1. Setup Router for ViewSets
+
+# ── Health Check ──────────────────────────────────────────────
+def health_check(request):
+    checks = {}
+    try:
+        connection.ensure_connection()
+        checks['database'] = 'ok'
+    except Exception as e:
+        checks['database'] = f'error: {str(e)}'
+    try:
+        cache.set('health_ping', 'pong', timeout=5)
+        checks['cache'] = 'ok'
+    except Exception as e:
+        checks['cache'] = f'error: {str(e)}'
+
+    status = 200 if all(v == 'ok' for v in checks.values()) else 503
+    return JsonResponse({
+        'status': 'healthy' if status == 200 else 'degraded',
+        'checks': checks
+    }, status=status)
+
+
+# ── Router ────────────────────────────────────────────────────
 router = DefaultRouter()
-# The 'bookings' string below defines the /api/bookings/ path
 router.register(r'bookings', BookingViewSet, basename='booking')
 router.register(r'shipments', ShipmentViewSet, basename='shipment')
 router.register(r'bids', BidViewSet, basename='bid')
 
+# ── URL Patterns ──────────────────────────────────────────────
 urlpatterns = [
-    # Admin Interface
+    path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
-
     path('api/bookings/summary/', BookingSummaryView.as_view(), name='booking-summary'),
-
-    # API ViewSets (This will include /api/bookings/ and /api/bookings/summary/)
     path('api/', include(router.urls)),
-
-    # Authentication Endpoints
     path('api/register/', RegisterView.as_view(), name='register'),
-    path('api/login/', LoginView.as_view(), name='login'),
+    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/carrier/documents/', CarrierDocumentUploadView.as_view(), name='carrier-document-upload'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
