@@ -1,3 +1,12 @@
+# 🚚 CargoLink
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=githubactions)
+![Flutter](https://img.shields.io/badge/Flutter-Stable-blue?style=for-the-badge&logo=flutter)
+![Django](https://img.shields.io/badge/Django-6.0.3-darkgreen?style=for-the-badge&logo=django)
+![Hosting](https://img.shields.io/badge/Hosted_on-Render-black?style=for-the-badge&logo=render)
+
+CargoLink is a robust, full-stack logistics and booking application designed to streamline cargo management. Built with a cross-platform mobile frontend and a powerful REST API backend, it enables seamless booking, user ratings, and real-time data synchronization.
+
 ---
 
 ## 🚀 Getting Started
@@ -152,3 +161,4 @@ On every push to the `new_frontend` branch, the pipeline automatically:
 ## 👨‍💻 Team
 
 * **Emmanuel Kimbi** — Full Stack Developer
+* **Che Hermann**  - Full Stack Developer
