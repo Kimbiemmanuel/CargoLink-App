@@ -1,11 +1,7 @@
-// Firebase configuration and initialization
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-
+// Firebase is not used in this build — app connects to Django backend
+// Kept as a stub to avoid import errors in any referencing files
 class FirebaseConfig {
   static Future<void> initialize() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // No-op: Firebase replaced by Django REST API
   }
 }

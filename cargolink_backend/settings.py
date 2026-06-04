@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-&@+we680c-**n22_em^sq&a4+i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
@@ -359,10 +359,13 @@ if not DEBUG:
 # Cache Configuration
 # ============================================
 
+_REDIS_URL = os.getenv('REDIS_URL', '')
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'LOCATION': _REDIS_URL,
+    } if _REDIS_URL else {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 

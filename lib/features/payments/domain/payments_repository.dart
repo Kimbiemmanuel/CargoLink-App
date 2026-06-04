@@ -1,6 +1,6 @@
 // Payments repository interface
 abstract class PaymentsRepository {
-  Future<Map<String, dynamic>> initiatePay ment({
+  Future<Map<String, dynamic>> initiatePayment({
     required String bookingId,
     required double amount,
   });
@@ -9,14 +9,9 @@ abstract class PaymentsRepository {
     required String paymentIntentId,
   });
 
-  Future<List<Map<String, dynamic>>> getTransactionHistory({
-    int page = 1,
-  });
+  Future<List<Map<String, dynamic>>> getTransactionHistory({int page = 1});
 
   Future<Map<String, dynamic>> getTransactionDetails(String transactionId);
 
-  Future<void> refund({
-    required String transactionId,
-    String? reason,
-  });
+  Future<void> refund({required String transactionId, String? reason});
 }

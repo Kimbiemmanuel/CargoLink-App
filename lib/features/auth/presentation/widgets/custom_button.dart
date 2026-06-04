@@ -11,7 +11,7 @@ class CustomButton extends StatelessWidget {
   final Color? textColor;
   final double? width;
   final double height;
-  final BorderRadiusGeometry borderRadius;
+  final BorderRadius borderRadius;
 
   const CustomButton({
     Key? key,
@@ -43,23 +43,26 @@ class CustomButton extends StatelessWidget {
                   : AppTheme.lightGray,
               borderRadius: borderRadius,
             ),
-            child: isLoading
-                ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            child: Center(
+              child: isLoading
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      text,
+                      style: TextStyle(
+                        color: textColor ?? Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  )
-                : Text(
-                    text,
-                    style: TextStyle(
-                      color: textColor ?? Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+            ),
           ),
         ),
       ),

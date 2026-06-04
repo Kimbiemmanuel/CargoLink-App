@@ -1,23 +1,23 @@
-// Login screen for CargoLink
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_routes.dart';
 import '../../../../config/app_theme.dart';
+import '../../../../core/auth_provider.dart';
 import '../widgets/email_input_field.dart';
 import '../widgets/password_input_field.dart';
 import '../widgets/custom_button.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -26,51 +26,85 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      // Simulate login process
-      await Future.delayed(const Duration(seconds: 2));
+    final success = await ref.read(authProvider.notifier).login(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+    if (!mounted) return;
 
-        // Navigate based on user role (for now, navigate to shipper dashboard)
-        Navigator.of(context).pushReplacementNamed(AppRoutes.shipperDashboard);
-      }
+    if (success) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(ref.read(authProvider).error ?? 'Login failed'),
+        backgroundColor: AppTheme.errorColor,
+      ));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(
+            horizontal: size.width * 0.06,
+            vertical: 24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
-              const Text(
-                'Welcome Back',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textColor,
+              SizedBox(height: size.height * 0.04),
+
+              // Logo
+              Center(
+                child: Column(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.local_shipping_rounded,
+                          color: Colors.white, size: 40),
+                    ),
+                    const SizedBox(height: 12),
+                    Text('CargoLink',
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor)),
+                    const SizedBox(height: 4),
+                    Text('Your trusted cargo partner',
+                        style: TextStyle(
+                            fontSize: 14, color: AppTheme.lightGray)),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Sign in to your account to continue',
-                style: TextStyle(fontSize: 16, color: AppTheme.lightGray),
-              ),
-              const SizedBox(height: 40),
+
+              SizedBox(height: size.height * 0.05),
+
+              const Text('Welcome Back',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textColor)),
+              const SizedBox(height: 6),
+              Text('Sign in to your account to continue',
+                  style:
+                      TextStyle(fontSize: 15, color: AppTheme.lightGray)),
+              const SizedBox(height: 32),
+
               Form(
                 key: _formKey,
                 child: Column(
@@ -78,142 +112,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     EmailInputField(controller: _emailController),
                     const SizedBox(height: 16),
                     PasswordInputField(controller: _passwordController),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          // TODO: Implement forgot password
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Forgot password flow'),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
                     CustomButton(
                       text: 'Sign In',
                       onPressed: _handleLogin,
-                      isLoading: _isLoading,
+                      isLoading: auth.isLoading,
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Divider(color: AppTheme.lightGray, height: 1),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      'Or',
-                      style: TextStyle(
-                        color: AppTheme.lightGray,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  const Expanded(
-                    child: Divider(color: AppTheme.lightGray, height: 1),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildSocialButton(
-                icon: 'assets/icons/google.svg',
-                label: 'Sign in with Google',
-                onTap: () {
-                  // TODO: Implement Google Sign In
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildSocialButton(
-                icon: 'assets/icons/phone.svg',
-                label: 'Sign in with Phone',
-                onTap: () {
-                  // TODO: Implement Phone Sign In
-                },
-              ),
-              const SizedBox(height: 40),
               Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Don\'t have an account? ',
-                      style: TextStyle(fontSize: 14, color: AppTheme.textColor),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pushNamed(AppRoutes.register);
-                      },
-                      child: const Text(
-                        'Sign Up',
+                    Text("Don't have an account? ",
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
+                            fontSize: 14, color: AppTheme.textColor)),
+                    GestureDetector(
+                      onTap: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.register),
+                      child: Text('Sign Up',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor)),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required String icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.lightGray),
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icon placeholder
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.language, size: 16),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textColor,
-              ),
-            ),
-          ],
         ),
       ),
     );
