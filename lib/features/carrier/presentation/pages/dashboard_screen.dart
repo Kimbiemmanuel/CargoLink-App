@@ -1,17 +1,21 @@
 // Carrier dashboard screen showing nearby delivery requests
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_routes.dart';
 import '../../../../config/app_theme.dart';
+import '../../../../core/auth_provider.dart';
 import '../widgets/nearby_requests_card.dart';
 
-class CarrierDashboardScreen extends StatefulWidget {
+class CarrierDashboardScreen extends ConsumerStatefulWidget {
   const CarrierDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<CarrierDashboardScreen> createState() => _CarrierDashboardScreenState();
+  ConsumerState<CarrierDashboardScreen> createState() =>
+      _CarrierDashboardScreenState();
 }
 
-class _CarrierDashboardScreenState extends State<CarrierDashboardScreen> {
+class _CarrierDashboardScreenState
+    extends ConsumerState<CarrierDashboardScreen> {
   String _selectedFilter = 'Nearby';
   final List<String> _filterOptions = ['Nearby', 'All', 'Saved'];
 
@@ -66,9 +70,16 @@ class _CarrierDashboardScreenState extends State<CarrierDashboardScreen> {
         backgroundColor: AppTheme.primaryColor,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_outlined),
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.notifications);
+            icon: const Icon(Icons.logout_outlined),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.login,
+                  (route) => false,
+                );
+              }
             },
           ),
         ],
@@ -236,7 +247,9 @@ class _CarrierDashboardScreenState extends State<CarrierDashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).pushNamed(AppRoutes.vehicleManagement);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vehicle management coming soon')),
+          );
         },
         backgroundColor: AppTheme.primaryColor,
         child: const Icon(Icons.directions_car),

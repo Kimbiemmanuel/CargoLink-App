@@ -6,6 +6,7 @@ import 'core/auth_provider.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/pages/signup_screen.dart';
 import 'features/auth/presentation/pages/role_selection_screen.dart';
+import 'features/shipper/presentation/pages/shipper_dashboard_screen.dart';
 import 'features/shipper/presentation/pages/create_booking_screen.dart';
 import 'features/carrier/presentation/pages/dashboard_screen.dart';
 import 'features/admin/presentation/pages/dashboard_screen.dart';
@@ -31,7 +32,8 @@ class CargoLinkApp extends ConsumerWidget {
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.register: (_) => const SignupScreen(),
         AppRoutes.roleSelection: (_) => const RoleSelectionScreen(),
-        AppRoutes.shipperDashboard: (_) => const CreateBookingScreen(),
+        AppRoutes.shipperDashboard: (_) => const ShipperDashboardScreen(),
+        AppRoutes.createBooking: (_) => const CreateBookingScreen(),
         AppRoutes.carrierDashboard: (_) => const CarrierDashboardScreen(),
         AppRoutes.adminDashboard: (_) => const AdminDashboardScreen(),
       },

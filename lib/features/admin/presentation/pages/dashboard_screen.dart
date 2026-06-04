@@ -1,17 +1,20 @@
 // Admin dashboard screen with analytics and user management
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/app_routes.dart';
 import '../../../../config/app_theme.dart';
+import '../../../../core/auth_provider.dart';
 import '../widgets/analytics_card.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
+class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  ConsumerState<AdminDashboardScreen> createState() =>
+      _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   String _selectedTab = 'Overview';
   final List<String> _tabOptions = ['Overview', 'Users', 'Disputes', 'Reports'];
 
@@ -70,15 +73,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: AppTheme.primaryColor,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_outlined),
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.notifications);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.of(context).pushNamed(AppRoutes.adminSettings);
+            icon: const Icon(Icons.logout_outlined),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.login,
+                  (route) => false,
+                );
+              }
             },
           ),
         ],
@@ -351,9 +355,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed(AppRoutes.adminDisputes);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Disputes module coming soon')),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
@@ -414,9 +418,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.of(
-                              context,
-                            ).pushNamed(AppRoutes.adminReports);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Reports module coming soon')),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
