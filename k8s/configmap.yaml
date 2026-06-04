@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cargolink-config
+  namespace: cargolink
+data:
+  DEBUG: "False"
+  DB_ENGINE: "django.db.backends.postgresql"
+  DB_NAME: "cargolink_db"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  REDIS_URL: "redis://redis-service:6379/1"
+  CELERY_BROKER_URL: "redis://redis-service:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis-service:6379/2"
+  EMAIL_BACKEND: "django.core.mail.backends.console.EmailBackend"
+  DEFAULT_FROM_EMAIL: "noreply@cargolink.com"
+  DJANGO_LOG_LEVEL: "INFO"
+  ALLOWED_HOSTS: "*"

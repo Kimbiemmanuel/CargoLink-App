@@ -1,10 +1,22 @@
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import BaseUserManager
-from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-# --- A. USER MANAGEMENT ---
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
+
 
 class User(AbstractUser):
     USER_TYPES = (
@@ -13,11 +25,19 @@ class User(AbstractUser):
         ('Admin', 'Admin'),
     )
     email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20, unique=True)
-    user_type = models.CharField(max_length=10, choices=USER_TYPES)
+    phone = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    user_type = models.CharField(max_length=10, choices=USER_TYPES, default='Shipper')
     is_email_verified = models.BooleanField(default=False)
     average_rating = models.FloatField(default=0)
     total_ratings = models.IntegerField(default=0)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    objects = UserManager()
+
+    def __str__(self):
+        return self.email
 
 
 class Shipper(models.Model):
@@ -29,6 +49,9 @@ class Shipper(models.Model):
     country = models.CharField(max_length=100, default='Cameroon')
     payment_method_id = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.full_name
 
 
 class Carrier(models.Model):
@@ -44,69 +67,36 @@ class Carrier(models.Model):
     completed_jobs = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.full_name
+
 
 class AdminProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     admin_name = models.CharField(max_length=255)
-    role = models.CharField(max_length=50, choices=(('Super_Admin', 'Super_Admin'), ('Moderator', 'Moderator'),
-                                                    ('Support', 'Support')))
+    role = models.CharField(
+        max_length=50,
+        choices=(('Super_Admin', 'Super_Admin'), ('Moderator', 'Moderator'), ('Support', 'Support'))
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.admin_name
 
 
 class CarrierProfile(models.Model):
-    VEHICLE_TYPES = (('Bike', 'Bike'), ('Van', 'Van'), ('Pickup', 'Pickup'), ('Small_Truck', 'Small_Truck'),
-                     ('Large_Truck', 'Large_Truck'))
+    VEHICLE_TYPES = (
+        ('Bike', 'Bike'), ('Van', 'Van'), ('Pickup', 'Pickup'),
+        ('Small_Truck', 'Small_Truck'), ('Large_Truck', 'Large_Truck')
+    )
     carrier = models.OneToOneField(Carrier, on_delete=models.CASCADE)
     vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPES)
     vehicle_capacity_kg = models.FloatField()
     registration_no = models.CharField(max_length=50, unique=True)
     vehicle_make = models.CharField(max_length=100, null=True)
     vehicle_model = models.CharField(max_length=100, null=True)
-    insurance_document = models.TextField(null=True)  # URL
+    insurance_document = models.TextField(null=True)
     verified_by = models.ForeignKey(AdminProfile, on_delete=models.SET_NULL, null=True)
 
-class UserManager(BaseUserManager):
-        def create_user(self, email, password=None, **extra_fields):
-            if not email:
-                raise ValueError("Email is required")
-
-            email = self.normalize_email(email)
-            user = self.model(email=email, **extra_fields)
-            user.set_password(password)
-            user.save()
-            return user
-
-        def create_superuser(self, email, password):
-            user = self.create_user(email=email, password=password)
-            user.is_staff = True
-            user.is_superuser = True
-            user.save()
-            return user
-
-
-class Booking:
-    pass
-
-
-def payments():
-    return None
-
-
-def ratings():
-    return None
-
-
-class Transaction:
-    pass
-
-
-class Rating:
-    pass
-
-
-class LocationTracking:
-    pass
-
-
-class Dispute:
-    pass
+    def __str__(self):
+        return f"{self.vehicle_type} — {self.registration_no}"
