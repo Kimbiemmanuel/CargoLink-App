@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import firebase_admin
-from firebase_admin import credentials
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,14 +35,21 @@ ALLOWED_HOSTS = ['*']
 
 # Application definition
 
-INSTALLED_APPS = [
+import sys
+import importlib.util
+
+# Only include daphne when it's actually installed (Linux/Docker)
+_BASE_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'daphne',  # For WebSocket support
+]
+_DAPHNE = ['daphne'] if importlib.util.find_spec('daphne') else []
+
+INSTALLED_APPS = _DAPHNE + _BASE_APPS + [
     'users',
     'bookings',
     'payments',
@@ -163,6 +168,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = str(DEBUG).lower() not in ('false', '0', '')  # Open in dev; lock down in prod
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -209,23 +215,29 @@ FIREBASE_AUTH_PROVIDER_X509_CERT_URL = os.getenv(
 )
 FIREBASE_CLIENT_X509_CERT_URL = os.getenv('FIREBASE_CLIENT_X509_CERT_URL')
 
-# Initialize Firebase Admin SDK
-if FIREBASE_PRIVATE_KEY and not firebase_admin.get_app():
-    firebase_credentials = {
-        'type': 'service_account',
-        'project_id': FIREBASE_PROJECT_ID,
-        'private_key_id': FIREBASE_PRIVATE_KEY_ID,
-        'private_key': FIREBASE_PRIVATE_KEY.replace('\\n', '\n'),
-        'client_email': FIREBASE_CLIENT_EMAIL,
-        'client_id': FIREBASE_CLIENT_ID,
-        'auth_uri': FIREBASE_AUTH_URI,
-        'token_uri': FIREBASE_TOKEN_URI,
-        'auth_provider_x509_cert_url': FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-        'client_x509_cert_url': FIREBASE_CLIENT_X509_CERT_URL,
-    }
-    
-    cred = credentials.Certificate(firebase_credentials)
-    firebase_admin.initialize_app(cred)
+# Initialize Firebase Admin SDK (only when credentials are provided)
+if FIREBASE_PRIVATE_KEY:
+    try:
+        import firebase_admin
+        from firebase_admin import credentials as fb_credentials
+        if not firebase_admin._apps:
+            firebase_credentials = {
+                'type': 'service_account',
+                'project_id': FIREBASE_PROJECT_ID,
+                'private_key_id': FIREBASE_PRIVATE_KEY_ID,
+                'private_key': FIREBASE_PRIVATE_KEY.replace('\\n', '\n'),
+                'client_email': FIREBASE_CLIENT_EMAIL,
+                'client_id': FIREBASE_CLIENT_ID,
+                'auth_uri': FIREBASE_AUTH_URI,
+                'token_uri': FIREBASE_TOKEN_URI,
+                'auth_provider_x509_cert_url': FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+                'client_x509_cert_url': FIREBASE_CLIENT_X509_CERT_URL,
+            }
+            cred = fb_credentials.Certificate(firebase_credentials)
+            firebase_admin.initialize_app(cred)
+    except Exception as e:
+        import logging
+        logging.warning(f"Firebase initialization skipped: {e}")
 
 
 # ============================================
@@ -269,6 +281,10 @@ CELERY_TIMEZONE = 'UTC'
 # Logging Configuration
 # ============================================
 
+# Ensure logs directory exists
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -299,7 +315,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'cargolink.log',
+            'filename': LOGS_DIR / 'cargolink.log',
             'maxBytes': 1024 * 1024 * 10,  # 10MB
             'backupCount': 10,
             'formatter': 'verbose',

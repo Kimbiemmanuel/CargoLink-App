@@ -1,0 +1,143 @@
+---
+# Django Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cargolink-backend
+  namespace: cargolink
+  labels:
+    app: cargolink-backend
+spec:
+  replicas: 2          # Kubernetes load-balances across both replicas
+  selector:
+    matchLabels:
+      app: cargolink-backend
+  template:
+    metadata:
+      labels:
+        app: cargolink-backend
+    spec:
+      containers:
+        - name: backend
+          image: cargolink-backend:latest   # built from your Dockerfile
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: cargolink-config
+            - secretRef:
+                name: cargolink-secrets
+          readinessProbe:
+            httpGet:
+              path: /api/
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+# Backend Service — ClusterIP (nginx routes to this)
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: cargolink
+spec:
+  selector:
+    app: cargolink-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# Nginx Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: cargolink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+
+---
+# Nginx ConfigMap (embeds the nginx.conf)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: cargolink
+data:
+  default.conf: |
+    upstream django_backend {
+        server backend-service:8000;
+    }
+    server {
+        listen 80;
+        server_name _;
+        client_max_body_size 20M;
+
+        location / {
+            proxy_pass http://django_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        location /ws/ {
+            proxy_pass http://django_backend;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+        }
+    }
+
+---
+# Nginx Service — NodePort exposes the app to the internet
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  namespace: cargolink
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080     # Access via http://<VPS-IP>:30080
+  type: NodePort
