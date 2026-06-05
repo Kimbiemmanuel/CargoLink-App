@@ -32,4 +32,5 @@ class AppRoutes {
   static const String ratingPage = '/rating';
   static const String notifications = '/notifications';
   static const String help = '/help';
+  static const String aboutUs = '/about';
 }

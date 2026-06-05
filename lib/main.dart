@@ -10,6 +10,7 @@ import 'features/shipper/presentation/pages/shipper_dashboard_screen.dart';
 import 'features/shipper/presentation/pages/create_booking_screen.dart';
 import 'features/carrier/presentation/pages/dashboard_screen.dart';
 import 'features/admin/presentation/pages/dashboard_screen.dart';
+import 'features/about/presentation/pages/about_us_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: CargoLinkApp()));
@@ -36,6 +37,7 @@ class CargoLinkApp extends ConsumerWidget {
         AppRoutes.createBooking: (_) => const CreateBookingScreen(),
         AppRoutes.carrierDashboard: (_) => const CarrierDashboardScreen(),
         AppRoutes.adminDashboard: (_) => const AdminDashboardScreen(),
+        AppRoutes.aboutUs: (_) => const AboutUsScreen(),
       },
     );
   }

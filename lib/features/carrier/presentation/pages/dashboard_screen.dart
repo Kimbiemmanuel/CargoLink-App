@@ -70,6 +70,11 @@ class _CarrierDashboardScreenState
         backgroundColor: AppTheme.primaryColor,
         actions: [
           IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'About Us',
+            onPressed: () => Navigator.of(context).pushNamed(AppRoutes.aboutUs),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout_outlined),
             tooltip: 'Logout',
             onPressed: () async {
