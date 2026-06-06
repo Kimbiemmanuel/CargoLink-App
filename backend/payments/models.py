@@ -1,5 +1,4 @@
 from django.db import models
-
 from bookings.models import Booking
 
 
@@ -11,22 +10,5 @@ class Transaction(models.Model):
     stripe_payment_intent_id = models.CharField(max_length=255, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
-def payments():
-    return None
-
-
-def ratings():
-    return None
-
-
-class Carrier:
-    pass
-
-
-class Shipper:
-    pass
-
-
-class User:
-    pass
+    def __str__(self):
+        return f"Transaction {self.pk} - {self.payment_status}"
